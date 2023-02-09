@@ -1,8 +1,11 @@
 package html2png
 
 import (
+	"context"
+	"github.com/playwright-community/playwright-go"
 	"os"
 	"testing"
+	"time"
 )
 
 const (
@@ -10,7 +13,19 @@ const (
 )
 
 func TestHtmlToPng(t *testing.T) {
-	pngitem, err := HtmlToPng(testHtml, 500, 500)
+	err := playwright.Install(&playwright.RunOptions{
+		Browsers: []string{"chromium"},
+		Verbose:  false,
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	pngitem, err := HtmlToPng(ctx, testHtml, 500, 500)
 	if err != nil {
 		t.Error(err)
 	}

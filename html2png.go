@@ -2,10 +2,8 @@ package html2png
 
 import (
 	"context"
-	"errors"
-	"fmt"
+	"github.com/playwright-community/playwright-go"
 	"os"
-	"os/exec"
 	"strings"
 )
 
@@ -42,9 +40,7 @@ func HtmlToPng(ctx context.Context, html string, height int, width int) ([]byte,
 	if err != nil {
 		return nil, err
 	}
-
-	pngFile := tempDir + "\\temp.png"
-
+	
 	_, err = f.WriteString(html)
 	if err != nil {
 		return nil, err
@@ -55,37 +51,39 @@ func HtmlToPng(ctx context.Context, html string, height int, width int) ([]byte,
 		return nil, err
 	}
 
-	args := []string{
-		"--headless",
-		"--no-sandbox",
-		"--disable-crash-reporter",
-		"--hide-scrollbars",
-		"--default-background-color=00000000",
-		"--disable-gpu",
-		"--window-size=" + fmt.Sprintf("%d,%d", width, height),
-		"--screenshot=" + pngFile,
-		"file://" + htmlFile,
-	}
-
-	if err := exec.CommandContext(ctx, getChromePath(), args...).Run(); err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			return nil, errors.New("takes screenshot got timeout")
-		}
-
+	pw, err := playwright.Run()
+	if err != nil {
 		return nil, err
 	}
 
-	if _, err := os.Stat(pngFile); os.IsNotExist(err) {
+	client, err := pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
+		Headless: playwright.Bool(true),
+	})
+	if err != nil {
 		return nil, err
 	}
 
-	png, err := os.ReadFile(pngFile)
+	// screenshot
+	page, err := client.NewPage()
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = page.Goto("file:///" + htmlFile)
+	if err != nil {
+		return nil, err
+	}
+
+	err = page.SetViewportSize(width, height)
+	if err != nil {
+		return nil, err
+	}
+
+	screenshot, err := page.Screenshot()
 	if err != nil {
 		return nil, err
 	}
 
 	_ = os.Remove(htmlFile)
-	_ = os.Remove(pngFile)
-
-	return png, nil
+	return screenshot, nil
 }
