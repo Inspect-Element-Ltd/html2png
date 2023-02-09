@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 )
 
 var (
@@ -34,7 +33,7 @@ func getChromePath() string {
 	return ""
 }
 
-func HtmlToPng(html string, height int, width int) ([]byte, error) {
+func HtmlToPng(ctx context.Context, html string, height int, width int) ([]byte, error) {
 	// write val to html in temp
 	// convert to png
 	tempDir := os.TempDir()
@@ -67,9 +66,6 @@ func HtmlToPng(html string, height int, width int) ([]byte, error) {
 		"--screenshot=" + pngFile,
 		"file://" + htmlFile,
 	}
-
-	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
-	defer cancel()
 
 	if err := exec.CommandContext(ctx, getChromePath(), args...).Run(); err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
