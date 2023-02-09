@@ -1,4 +1,4 @@
-package svg2png
+package html2png
 
 import (
 	"context"
@@ -34,19 +34,19 @@ func getChromePath() string {
 	return ""
 }
 
-func SvgToPng(svg string, height int, width int) ([]byte, error) {
-	// write val to svg in temp
+func HtmlToPng(html string, height int, width int) ([]byte, error) {
+	// write val to html in temp
 	// convert to png
 	tempDir := os.TempDir()
-	svgFile := strings.Replace(tempDir+"\\temp.svg", "\\", "/", -1)
-	f, err := os.Create(svgFile)
+	htmlFile := strings.Replace(tempDir+"\\temp.html", "\\", "/", -1)
+	f, err := os.Create(htmlFile)
 	if err != nil {
 		return nil, err
 	}
 
 	pngFile := tempDir + "\\temp.png"
 
-	_, err = f.WriteString(svg)
+	_, err = f.WriteString(html)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func SvgToPng(svg string, height int, width int) ([]byte, error) {
 		"--disable-gpu",
 		"--window-size=" + fmt.Sprintf("%d,%d", width, height),
 		"--screenshot=" + pngFile,
-		"file://" + svgFile,
+		"file://" + htmlFile,
 	}
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
@@ -88,7 +88,7 @@ func SvgToPng(svg string, height int, width int) ([]byte, error) {
 		return nil, err
 	}
 
-	_ = os.Remove(svgFile)
+	_ = os.Remove(htmlFile)
 	_ = os.Remove(pngFile)
 
 	return png, nil
